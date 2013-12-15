@@ -1,17 +1,5 @@
 require 'spec_helper'
 
-shared_examples "SignupError" do |error, name, email, password, confirmation|
-  before do
-    fill_in "Name",           with: name
-    fill_in "Email",          with: email
-    fill_in "Password",       with: password
-    fill_in "Confirmation",   with: confirmation
-    click_button submit
-  end
-  it { should have_selector('title', text: 'Sign up') }
-  it { should have_content(error) }
-end
-
 describe "UserPages" do
 
   subject { page }
@@ -35,22 +23,46 @@ describe "UserPages" do
     end
 
     describe "after submission" do
-      it_should_behave_like "SignupError", "6 errors"
-      it_should_behave_like "SignupError", "Name can't be blank", "", "user@example.com", "foobar", "foobar"
-      it_should_behave_like "SignupError", "Email can't be blank", "Example User", "", "foobar", "foobar"
-      it_should_behave_like "SignupError", "Email is invalid", "Example User", "user@example", "foobar", "foobar"
-      it_should_behave_like "SignupError", "Password can't be blank", "Example User", "user@example.com", "", "foobar"
-      it_should_behave_like "SignupError", "Password is too short (minimum is 6 characters)", "Example User", "user@example.com", "foo", "foobar"
-      it_should_behave_like "SignupError", "Password confirmation can't be blank", "Example User", "user@example.com", "foobar", ""
+      let(:user) { FactoryGirl.create(:user) }
+      describe "with all blank fields" do
+        before { signup('', '', '', '') }
+        it { should have_signup_error("6 errors") }
+      end
+      describe "with blank name field" do
+        before { signup('', user.email, user.password, user.password_confirmation) }
+        it { should have_signup_error("Name can't be blank") }
+      end
+      describe "with blank email field" do
+        before { signup(user.name, '', user.password, user.password_confirmation) }
+        it { should have_signup_error("Email can't be blank") }
+      end
+      describe "with wrong email field" do
+        before { signup(user.name, 'user@example', user.password, user.password_confirmation) }
+        it { should have_signup_error("Email is invalid") }
+      end
+      describe "with blank password field" do
+        before { signup(user.name, user.email, '', user.password_confirmation) }
+        it { should have_signup_error("Password can't be blank") }
+      end
+      describe "with short password field" do
+        before { signup(user.name, user.email, '12345', user.password_confirmation) }
+        it { should have_signup_error("Password is too short (minimum is 6 characters)") }
+      end
+      describe "with blank password confirmation field" do
+        before { signup(user.name, user.email, user.password, '') }
+        it { should have_signup_error("Password confirmation can't be blank") }
+      end
+      describe "with different password fields" do
+        before { signup(user.name, user.email, user.password, 'foobare') }
+        it { should have_signup_error("Password doesn't match confirmation") }
+      end
     end
 
     describe "with valid information" do
-      before do
-        fill_in "Name",           with: "Example User"
-        fill_in "Email",          with: "user@example.com"
-        fill_in "Password",       with: "foobar"
-        fill_in "Confirmation",   with: "foobar"
-      end
+
+    let(:user) { FactoryGirl.build(:user2) }
+
+    before { fill_signup_form(user) }
 
       it "should create a user" do
         expect { click_button submit }.to change(User, :count).by(1)
@@ -58,10 +70,10 @@ describe "UserPages" do
 
       describe "after saving the user" do
         before { click_button submit }
-        let(:user) { User.find_by_email("user@example.com") }
+        let(:new_user) { User.find_by_email(user.email) }
 
-        it { should have_selector('title', text: user.name) }
-        it { should have_selector('div.alert.alert-success', text: 'Welcome') }
+        it { should have_selector('title', text: new_user.name) }
+        it { should have_success_message('Welcome') }
         it { should have_link('Sign out') }
       end
 
