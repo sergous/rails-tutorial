@@ -1,19 +1,16 @@
 require 'spec_helper'
 
-describe "UserPages" do
-
+describe "User pages" do
   subject { page }
-
-  describe "signup page" do
-
-    before { visit signup_path }
-
-    it { should have_selector('h1',   text: 'Sign up') }
-    it { should have_selector('title', text: full_title('Sign up')) }
-  end
 
   describe "signup" do
     before { visit signup_path }
+
+    describe "page" do
+      it { should have_selector('h1',   text: 'Sign up') }
+      it { should have_selector('title', text: full_title('Sign up')) }
+    end
+
     let(:submit) { "Create my account" }
 
     describe "with invalid information" do
@@ -59,10 +56,8 @@ describe "UserPages" do
     end
 
     describe "with valid information" do
-
-    let(:user) { FactoryGirl.build(:user2) }
-
-    before { fill_signup_form(user) }
+      let(:user) { FactoryGirl.build(:user2) }
+      before { fill_signup_form(user) }
 
       it "should create a user" do
         expect { click_button submit }.to change(User, :count).by(1)
@@ -86,5 +81,42 @@ describe "UserPages" do
 
     it { should have_selector('h1',   text: user.name) }
     it { should have_selector('title', text: user.name) }
+  end
+
+  describe "edit" do
+    let(:user) { FactoryGirl.create(:user) }
+    before do
+      sign_in user
+      visit edit_user_path(user)
+    end
+
+    describe "page" do
+      it { should have_selector('h1',     text: "Update your profile") }
+      it { should have_selector('title',  text: "Edit user") }
+      it { should have_link('change',     href: 'http://gravatar.com/emails') }
+    end
+
+    describe "with invalid information" do
+      before { click_button "Save changes" }
+
+      it { should have_content('error') }
+    end
+
+    describe "with valid information" do
+      let(:new_user) { FactoryGirl.build(:user3) }
+
+      before do
+        user.name = new_user.name
+        user.email = new_user.email
+        fill_edit_form(user)
+        click_button "Save changes"
+      end
+
+      it { should have_selector('title', text: new_user.name) }
+      it { should have_success_message }
+      it { should have_link('Sign out', href: signout_path) }
+      specify { user.reload.name.should == new_user.name }
+      specify { user.reload.email.should == new_user.email }
+    end
   end
 end

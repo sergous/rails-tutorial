@@ -9,5 +9,10 @@ FactoryGirl.define do
       name      "Example User"
       email     "user@example.com"
     end
+
+    factory :user3 do
+      name      "New Name"
+      email     "new@example.com"
+    end
   end
 end
