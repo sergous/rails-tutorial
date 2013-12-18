@@ -20,6 +20,7 @@ html {
 
 body {
   padding-top: 60px;
+
 }
 
 section {
@@ -120,6 +121,11 @@ footer {
   @include box_sizing;
 }
 
+// thin browser width
+.container, .navbar-fixed-top .container {
+  width: 90%;
+}
+
 /* sidebar */
 
 aside {
@@ -165,7 +171,7 @@ input {
 }
 
 #error_explanation {
-  color: #ff0000;
+  color: $red;
   ul {
     list-style: none;
     margin: 0 0 18px 0;
@@ -175,4 +181,19 @@ input {
 .field_with_errors {
   @extend .control-group;
   @extend .error;
+}
+
+/* users index */
+
+.users {
+  list-style: none;
+  margin: 0;
+  li {
+    overflow: auto;
+    padding: 10px 0;
+    border-top: 1px solid $grayLighter;
+    &:last-child {
+      border-bottom: 1px solid $grayLighter;
+    }
+  }
 }
