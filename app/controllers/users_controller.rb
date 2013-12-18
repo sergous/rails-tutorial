@@ -1,5 +1,6 @@
 class UsersController < ApplicationController
   before_filter :signed_in_user, only: [:index, :edit, :update, :destroy]
+  before_filter :sign_out_user,  only: [:new, :create]
   before_filter :correct_user,   only: [:edit, :update]
   before_filter :admin_user,     only: :destroy
 
@@ -46,15 +47,22 @@ class UsersController < ApplicationController
   end
 
   private
-  def admin_user
-    redirect_to(root_path) unless current_user.admin?
-  end
+    def admin_user
+      redirect_to(root_path) unless current_user.admin?
+    end
 
-  private
     def signed_in_user
       unless signed_in?
         store_location
         redirect_to signin_url, notice: "Please sign in."
+      end
+    end
+
+    def sign_out_user
+      if signed_in?
+          store_location
+          flash[:notice] = "Please sign out before sign up."
+          redirect_to root_url
       end
     end
 

@@ -29,7 +29,7 @@ describe "Authentication" do
 
     describe 'with valid information' do
       let(:user) { FactoryGirl.create(:user) }
-      before { valid_signin(user) }
+      before { sign_in(user) }
 
       it { should have_selector('title', text: user.name) }
       it { should have_link('Profile', href: user_path(user)) }
@@ -40,7 +40,21 @@ describe "Authentication" do
         before { click_link "Sign out" }
         it { should have_link('Sign in') }
       end
-    end
 
+      describe "on create new user should be redirected to home on first time" do
+        before { visit signup_url }
+
+        it { should have_link('Profile', href: user_path(user)) }
+        it { should have_notice_message('Please sign out before sign up.') }
+      end
+    end
   end
+
+  describe "before see settings and profile links" do
+    before  { visit root_path }
+
+    it { should_not have_link('Profile') }
+    it { should_not have_link('Settings') }
+  end
+
 end

@@ -1,9 +1,18 @@
 include ApplicationHelper
 
-def valid_signin(user)
-  fill_in "Email",      with: user.email
-  fill_in "Password",   with: user.password
+def sign_in(user)
+  visit signin_path
+  fill_in "Email",          with: user.email
+  fill_in "Password",       with: user.password
   click_button "Sign in"
+  # Enter without Capybara
+  cookies[:remember_token] = user.remember_token
+end
+
+RSpec::Matchers.define :have_notice_message do |message|
+  match do |page|
+    page.should have_selector('div.alert.alert-notice', text: message)
+  end
 end
 
 RSpec::Matchers.define :have_error_message do |message|
@@ -22,16 +31,9 @@ def signup(name, email, password, confirmation)
     fill_in "Name",           with: name
     fill_in "Email",          with: email
     fill_in "Password",       with: password
-    fill_in "Confirmation",   with: confirmation
+    fill_in "Confirm Password",   with: confirmation
     click_button submit
 end
-
-#def valid_signup(user)
-#  fill_in "Name",           with: user.name
-#  fill_in "Email",          with: user.email
-#  fill_in "Password",       with: user.password
-#  fill_in "Confirmation",   with: user.password_confirmation
-#end
 
 RSpec::Matchers.define :have_signup_error do |message|
   match do |page|
