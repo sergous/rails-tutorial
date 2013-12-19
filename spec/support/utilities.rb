@@ -2,10 +2,10 @@ include ApplicationHelper
 
 def sign_in(user)
   visit signin_path
-  fill_in "Email",          with: user.email
-  fill_in "Password",       with: user.password
+  fill_in "Email",      with: user.email
+  fill_in "Password",   with: user.password
   click_button "Sign in"
-  # Enter without Capybara
+  # Enter without capybara
   cookies[:remember_token] = user.remember_token
 end
 
@@ -33,6 +33,20 @@ def signup(name, email, password, confirmation)
     fill_in "Password",       with: password
     fill_in "Confirm Password",   with: confirmation
     click_button submit
+end
+
+def fill_signup_form(user)
+  fill_in "Name",           with: user.name
+  fill_in "Email",          with: user.email
+  fill_in "Password",       with: user.password
+  fill_in "Confirm Password",   with: user.password_confirmation
+end
+
+def fill_edit_form(user)
+  fill_in "Name",           with: user.name
+  fill_in "Email",          with: user.email
+  fill_in "Password",       with: user.password
+  fill_in "Confirm Password",   with: user.password_confirmation
 end
 
 RSpec::Matchers.define :have_signup_error do |message|

@@ -1,19 +1,59 @@
 require 'spec_helper'
 
-describe "UserPages" do
-
+describe "User pages" do
   subject { page }
 
-  describe "signup page" do
+  describe "index" do
+    let(:user) { FactoryGirl.create(:user) }
 
-    before { visit signup_path }
+    before do
+      sign_in user
+      visit users_path
+    end
 
-    it { should have_selector('h1',   text: 'Sign up') }
-    it { should have_selector('title', text: full_title('Sign up')) }
+    it { should have_selector('title', text: 'All users')}
+    it { should have_selector('h1', text: 'All users')}
+
+    describe "pagination" do
+      before(:all) { 30.times { FactoryGirl.create(:user) } }
+      after(:all) { User.delete_all }
+
+      it { should have_selector('div.pagination') }
+
+      it "should list each user" do
+        User.paginate(page: 1).each do |user|
+          page.should have_selector('li', text: user.name)
+        end
+      end
+    end
+
+    describe "delete links" do
+
+      it { should_not have_link('delete') }
+
+      describe "as an admin user" do
+        let(:admin) { FactoryGirl.create(:admin) }
+        before do
+          sign_in admin
+          visit users_path
+        end
+
+        it { should have_link('delete', href: user_path(User.first)) }
+        it "should be able to delete another user" do
+          expect { click_link('delete') }.to change(User, :count).by(-1)
+        end
+      end
+    end
   end
 
   describe "signup" do
     before { visit signup_path }
+
+    describe "page" do
+      it { should have_selector('h1',   text: 'Sign up') }
+      it { should have_selector('title', text: full_title('Sign up')) }
+    end
+
     let(:submit) { "Create my account" }
 
     describe "with invalid information" do
@@ -23,7 +63,6 @@ describe "UserPages" do
     end
 
     describe "after submission" do
-
       let(:user) { FactoryGirl.create(:user) }
 
       describe "with all blank fields" do
@@ -68,18 +107,18 @@ describe "UserPages" do
     end
 
     describe "with valid information" do
-      let(:user2) { FactoryGirl.build(:user2) }
+      let(:user) { FactoryGirl.build(:user2) }
+      before { fill_signup_form(user) }
 
       it "should create a user" do
-        expect { signup(user2.name, user2.email, user2.password,
-                 user2.password_confirmation) }.to change(User, :count).by(1)
+        expect { click_button submit }.to change(User, :count).by(1)
       end
 
       describe "after saving the user" do
-        before { signup(user2.name, user2.email, user2.password, user2.password_confirmation) }
-        let(:user) { User.find_by_email(user2.email) }
+        before { click_button submit }
+        let(:new_user) { User.find_by_email(user.email) }
 
-        it { should have_selector('title', text: user2.name) }
+        it { should have_selector('title', text: new_user.name) }
         it { should have_success_message('Welcome') }
         it { should have_link('Sign out') }
       end
@@ -93,5 +132,42 @@ describe "UserPages" do
 
     it { should have_selector('h1',   text: user.name) }
     it { should have_selector('title', text: user.name) }
+  end
+
+  describe "edit" do
+    let(:user) { FactoryGirl.create(:user) }
+    before do
+      sign_in user
+      visit edit_user_path(user)
+    end
+
+    describe "page" do
+      it { should have_selector('h1',     text: "Update your profile") }
+      it { should have_selector('title',  text: "Edit user") }
+      it { should have_link('change',     href: 'http://gravatar.com/emails') }
+    end
+
+    describe "with invalid information" do
+      before { click_button "Save changes" }
+
+      it { should have_content('error') }
+    end
+
+    describe "with valid information" do
+      let(:new_user) { FactoryGirl.build(:user3) }
+
+      before do
+        user.name = new_user.name
+        user.email = new_user.email
+        fill_edit_form(user)
+        click_button "Save changes"
+      end
+
+      it { should have_selector('title', text: new_user.name) }
+      it { should have_success_message }
+      it { should have_link('Sign out', href: signout_path) }
+      specify { user.reload.name.should == new_user.name }
+      specify { user.reload.email.should == new_user.email }
+    end
   end
 end

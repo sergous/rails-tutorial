@@ -41,15 +41,21 @@ class UsersController < ApplicationController
   end
 
   def destroy
-    User.find(params[:id]).destroy
-    flash[:success] = "User destroyed."
-    redirect_to users_url
+    @user = User.find(params[:id])
+    if current_user?(@user)
+      flash[:notice] = "You can't delete admin user."
+      redirect_to users_url
+    else
+      @user.destroy
+      flash[:success] = "User destroyed."
+      redirect_to users_url
+    end
   end
 
   private
-    def admin_user
-      redirect_to(root_path) unless current_user.admin?
-    end
+  def admin_user
+    redirect_to(root_path) unless current_user.admin?
+  end
 
     def signed_in_user
       unless signed_in?
@@ -61,8 +67,7 @@ class UsersController < ApplicationController
     def sign_out_user
       if signed_in?
           store_location
-          flash[:notice] = "Please sign out before sign up."
-          redirect_to root_url
+          redirect_to root_path, notice: "Please sign out before sign up."
       end
     end
 
