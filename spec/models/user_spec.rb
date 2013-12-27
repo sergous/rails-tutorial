@@ -216,6 +216,29 @@ describe User do
       its(:followed_users) { should_not include(other_user) }
     end
   end
+
+  describe "relationship associations" do
+    let(:other_user) { FactoryGirl.create(:user) }
+    before do
+      @user.save
+      @user.follow!(other_user)
+      other_user.follow!(@user)
+    end
+
+    it "should destroy associated relationships" do
+      direct = @user.relationships.dup
+      @user.destroy
+      direct.should_not be_empty
+      direct.each {|direct| Relationship.find_by_id(direct.id).should be_nil}
+    end
+
+    it "should destroy associated reverse relationships" do
+      reverse = other_user.relationships.dup
+      @user.destroy
+      reverse.should_not be_empty
+      reverse.each {|reverse| Relationship.find_by_id(reverse.id).should be_nil}
+    end
+  end
 end
 
 
